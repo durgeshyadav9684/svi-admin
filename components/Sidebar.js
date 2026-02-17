@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '@/app/globals.css';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, toggle }) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -19,19 +19,22 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo">
         <h2>SVI ADMIN</h2>
+        <button className="close-sidebar" onClick={toggle}>
+          &times;
+        </button>
       </div>
       <nav className="sidebar-nav">
         <ul>
-          <li>
+          <li onClick={() => isOpen && toggle()}>
             <Link href="/dashboard">Dashboard</Link>
           </li>
-          <li>
+          <li onClick={() => isOpen && toggle()}>
             <Link href="/queries">Queries</Link>
           </li>
-          <li>
+          <li onClick={() => isOpen && toggle()}>
             <Link href="/products">Products</Link>
           </li>
         </ul>

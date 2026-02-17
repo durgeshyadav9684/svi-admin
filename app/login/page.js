@@ -25,6 +25,7 @@ export default function LoginPage() {
 
             if (res.ok) {
                 router.push('/dashboard');
+                console.log("Login successful", data);
                 router.refresh(); // Ensure layout clears/updates if needed
             } else {
                 setError(data.message || 'Login failed');
