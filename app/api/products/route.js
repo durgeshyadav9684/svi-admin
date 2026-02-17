@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
 
 let products = [
     // --- LIVING ROOM ---
@@ -92,7 +94,6 @@ let products = [
     { id: 82, category: "Dining", subcategory: "Kitchenware", title: "Pendant Light", desc: "Modern geometric lighting for dining area.", image: "https://images.unsplash.com/photo-1507473885765-e6ed657f78ea?auto=format&fit=crop&w=800&q=80", rate: "$110" },
 ];
 
-// CORS helper
 function cors(res) {
     res.headers.set("Access-Control-Allow-Origin", "*");
     res.headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
@@ -100,15 +101,6 @@ function cors(res) {
     return res;
 }
 
-export async function OPTIONS() {
-    return cors(new NextResponse(null, { status: 200 }));
-}
-
-//
-// ✅ GET PRODUCTS (with filters)
-//  /api/products?category=Living Room
-//  /api/products?subcategory=Sofas
-//
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
@@ -127,42 +119,69 @@ export async function GET(req) {
     return cors(NextResponse.json(filtered));
 }
 
-//
-// ✅ ADD PRODUCT
-//
 export async function POST(req) {
     try {
-        const body = await req.json();
+        const formData = await req.formData();
+
+        const name = formData.get('name');
+        const description = formData.get('description');
+        const price = formData.get('price');
+        const stock = formData.get('stock');
+        const category = formData.get('category');
+        const subcategory = formData.get('subcategory');
+        const imageFile = formData.get('image');
+
+        let imageUrl = "";
+
+        if (imageFile && typeof imageFile !== 'string') {
+            const bytes = await imageFile.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+
+            const filename = `${Date.now()}-${imageFile.name}`;
+            const path = join(process.cwd(), 'public/uploads', filename);
+
+            await writeFile(path, buffer);
+            imageUrl = `/uploads/${filename}`;
+        }
 
         const newProduct = {
             id: Date.now(),
-            name: body.name,
-            description: body.description,
-            price: Number(body.price),
-            stock: Number(body.stock),
-            category: body.category,
-            subcategory: body.subcategory,   // 👈 NEW FIELD
-            imageUrl: body.imageUrl || ""
+            title: name,
+            desc: description,
+            rate: `$${price}`,
+            stock: Number(stock),  // We still capture stock even if not in schema list
+            category: category,
+            subcategory: subcategory,
+            image: imageUrl
         };
 
         products.push(newProduct);
 
         return cors(NextResponse.json(newProduct, { status: 201 }));
-    } catch {
+    } catch (error) {
+        console.error("Error creating product:", error);
         return cors(
-            NextResponse.json({ error: "Failed to create product" }, { status: 400 })
+            NextResponse.json({ error: `Failed to create product: ${error.message}` }, { status: 400 })
         );
     }
 }
 
-//
-// ✅ DELETE PRODUCT
-//
 export async function DELETE(req) {
     const { searchParams } = new URL(req.url);
     const id = Number(searchParams.get("id"));
 
+    // Filter out the product (simulates delete)
+    const initialLength = products.length;
     products = products.filter(p => p.id !== id);
 
+    // Check if any product was actually removed (optional, but good for feedback)
+    if (products.length === initialLength) {
+        // Did not find product
+    }
+
     return cors(NextResponse.json({ success: true }));
+}
+
+export async function OPTIONS() {
+    return cors(new NextResponse(null, { status: 200 }));
 }

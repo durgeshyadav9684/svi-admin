@@ -84,22 +84,29 @@ export default function Products() {
                 {products.map(product => (
                     <div key={product.id} className="card product-card">
 
-                        {product.imageUrl && (
+                        {(product.image || product.imageUrl) && (
                             <div className="product-image">
-                                <img src={product.imageUrl} alt={product.name} />
+                                <img src={product.image || product.imageUrl} alt={product.title || product.name} />
                             </div>
                         )}
 
                         <div className="product-info">
-                            <h3>{product.name}</h3>
+                            <h3>{product.title || product.name}</h3>
 
                             <p className="category">
                                 {product.category}
-                                {product.subcategory && ` / ${product.subcategory}`}  {/* ✅ SHOW SUBCATEGORY */}
+                                {product.subcategory && ` / ${product.subcategory}`}
                             </p>
 
-                            <p className="price">${product.price}</p>
-                            <p className="stock">Stock: {product.stock}</p>
+                            {/* Display correct price/rate */}
+                            <p className="price">{product.rate || `$${product.price}`}</p>
+
+                            {/* Display Description */}
+                            <p className="description" style={{ fontSize: '0.9rem', color: '#666', margin: '0.5rem 0' }}>
+                                {product.desc || product.description}
+                            </p>
+
+                            {product.stock && <p className="stock">Stock: {product.stock}</p>}
                         </div>
 
                         <button
